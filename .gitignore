@@ -6,3 +6,4 @@ dist
 .upm
 .replit
 replit.nix
+.vscode

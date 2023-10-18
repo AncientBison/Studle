@@ -15,27 +15,26 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useState } from 'react';
 import Draggable from 'react-draggable';
 
-import { BACKEND_URL } from '../const/constants';
 import disableInteraction from '../const/disableInteraction';
 import disableTextSelection from '../const/disableTextSelection';
+import api from '../lib/api';
 import { stickerInfo } from './Market/stickerInfo';
 import RecentSetsBox from './RecentSetsBox';
 import customScrollbarStyles from './thinScrollbar.module.css';
 
-function HomePage(properties) {
-  const {
-    changePage,
-    stickers,
-    placeSticker,
-    removeSticker,
-    mainTheme,
-    setStudyingSetName,
-    setEditingSetName,
-    studyingShared,
-    sharedSetData,
-    showStickerDialog,
-    setShowStickerDialog,
-  } = properties;
+function HomePage({
+  changePage,
+  stickers,
+  placeSticker,
+  removeSticker,
+  mainTheme,
+  setStudyingSetName,
+  setEditingSetName,
+  studyingShared,
+  sharedSetData,
+  showStickerDialog,
+  setShowStickerDialog,
+}) {
   const [open, setOpen] = useState(false);
   const [recentSetNames, setRecentSetNames] = useState([]);
   const [fetchSetsStatus, setFetchSetsStatus] = useState('');
@@ -67,246 +66,6 @@ function HomePage(properties) {
     changePage('createSet');
   };
 
-  const ImportDialouge = (properties) => {
-    const { open, handleClose } = properties;
-    const [errorText, setErrorText] = useState('');
-    const [error, setError] = useState(false);
-    const [studleId, setStudleId] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    return (
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-        disableRestoreFocus
-      >
-        <DialogTitle id="alert-dialog-title">
-          {!loading ? 'Import a set!' : 'Importing...'}
-        </DialogTitle>
-        <DialogContent>
-          {!loading ? (
-            <TextField
-              autoFocus
-              id="studleIdInput"
-              margin="dense"
-              label="Studle Id"
-              variant="outlined"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="none"
-              inputProps={{
-                maxLength: 6,
-                minLength: 6,
-                autoCorrect: 'off',
-                autoCapitalize: 'none',
-              }}
-              error={error}
-              helperText={errorText}
-              onChange={(event) => {
-                setStudleId(event.target.value);
-              }}
-            />
-          ) : (
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <CircularProgress />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions
-          sx={{
-            justifyContent: 'space-between',
-            display: loading ? 'none' : 'block',
-          }}
-        >
-          <Button
-            onClick={async () => {
-              const alphabet =
-                'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-              if (studleId.value.length !== 6) {
-                setErrorText('The ID must be 6 letters long');
-                setError(true);
-                return;
-              }
-
-              const onlyAlphabetRegex = new RegExp(`^[${alphabet}]+$`);
-
-              if (!onlyAlphabetRegex.test(studleId.value)) {
-                setErrorText("ID's only contain upper/lowercase letters");
-                setError(true);
-                return;
-              }
-
-              setError(false);
-              setErrorText('');
-              setLoading(true);
-
-              const data = await fetch(
-                BACKEND_URL + '/sharedStudle/' + studleId.value,
-                {
-                  method: 'GET',
-                  credentials: 'include',
-                  mode: 'cors',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Credentials': 'true',
-                  },
-                }
-              );
-
-              const json = await data.json();
-
-              if (json.type == 'error') {
-                if (json.data == 'Studle Not Found') {
-                  setError(true);
-                  setErrorText('Set not found');
-                  setLoading(false);
-                  return;
-                } else if (json.data == 'No acess') {
-                  setError(true);
-                  setErrorText('Set is not public');
-                  setLoading(false);
-                  return;
-                }
-              }
-
-              studyingShared.current = true;
-              localStorage.setItem('studyingShared', true);
-              sharedSetData.current = JSON.parse(json.data);
-              setStudyingSetName(JSON.parse(json.data).name);
-              changePage('studySet');
-              handleClose();
-            }}
-          >
-            Study Now
-          </Button>
-          <Button
-            onClick={async () => {
-              const alphabet =
-                'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-              if (studleId.value.length !== 6) {
-                setErrorText('The ID must be 6 letters long');
-                setError(true);
-                return;
-              }
-
-              const onlyAlphabetRegex = new RegExp(`^[${alphabet}]+$`);
-
-              if (!onlyAlphabetRegex.test(studleId.value)) {
-                setErrorText("ID's only contain upper/lowercase letters");
-                setError(true);
-                return;
-              }
-
-              setError(false);
-              setErrorText('');
-              setLoading(true);
-
-              const data = await fetch(
-                BACKEND_URL + '/sharedStudle/' + studleId.value,
-                {
-                  method: 'GET',
-                  credentials: 'include',
-                  mode: 'cors',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Credentials': 'true',
-                  },
-                }
-              );
-
-              const json = await data.json();
-
-              if (json.type == 'error') {
-                if (json.data == 'Studle Not Found') {
-                  setError(true);
-                  setErrorText('Set not found');
-                  setLoading(false);
-                  return;
-                } else if (json.data == 'No acess') {
-                  setError(true);
-                  setErrorText('Set is not public');
-                  setLoading(false);
-                  return;
-                }
-              }
-
-              let dataStudleNames;
-
-              setLoading(true);
-
-              try {
-                dataStudleNames = await fetch(
-                  BACKEND_URL +
-                    '/studleNames/' +
-                    encodeURIComponent(localStorage.getItem('encryptedEmail')),
-                  {
-                    method: 'GET',
-                    credentials: 'include',
-                    mode: 'cors',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Access-Control-Allow-Credentials': 'true',
-                    },
-                  }
-                );
-              } catch (e) {
-                // ignore
-              }
-
-              let newStudleName = JSON.parse(json.data).name;
-
-              const existingStudleNames = (
-                await dataStudleNames.json()
-              ).data.map((studle) => studle.name);
-
-              if (existingStudleNames.includes(newStudleName)) {
-                let nextNumber = 1;
-                let newLabel = `${newStudleName} (${nextNumber})`;
-
-                while (existingStudleNames.includes(newLabel)) {
-                  nextNumber++;
-                  newLabel = `${newStudleName} (${nextNumber})`;
-                }
-
-                newStudleName = newLabel;
-              }
-
-              json.data = (() => {
-                const newData = JSON.parse(json.data);
-
-                newData.name = newStudleName;
-
-                return JSON.stringify(newData);
-              })();
-
-              fetch(BACKEND_URL + '/addStudleToUser', {
-                method: 'POST',
-                credentials: 'include',
-                mode: 'cors',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Access-Control-Allow-Credentials': 'true',
-                },
-                body: JSON.stringify({
-                  encryptedEmail: localStorage.getItem('encryptedEmail'),
-                  studleName: newStudleName,
-                  data: json.data,
-                }),
-              }).then(async () => {
-                updateRecentSetNames();
-                handleClose();
-              });
-            }}
-          >
-            Copy & Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  };
-
   return (
     <Box sx={{ height: 'max-content', width: '100%' }}>
       <StickerLibrary
@@ -317,7 +76,19 @@ function HomePage(properties) {
         setOpen={setShowStickerDialog}
         mainTheme={mainTheme}
       />
-      <ImportDialouge open={open} handleClose={handleClose}></ImportDialouge>
+      <ImportDialouge
+        open={open}
+        handleClose={handleClose}
+        onStudyNowComplete={(json) => {
+          studyingShared.current = true;
+          sharedSetData.current = json;
+          setStudyingSetName(json.data.name);
+          changePage('studySet');
+        }}
+        onCopyAndSaveComplete={() => {
+          updateRecentSetNames();
+        }}
+      ></ImportDialouge>
       <AppBar
         position="sticky"
         color="primary"
@@ -563,37 +334,196 @@ function StickerLibrary(properties) {
   );
 }
 
-async function getRecentSetNames(setFetchSetsStatus) {
-  let data;
-  try {
-    data = await fetch(
-      BACKEND_URL +
-        '/studleNames/' +
-        encodeURIComponent(localStorage.getItem('encryptedEmail')),
-      {
-        method: 'GET',
-        credentials: 'include',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Credentials': 'true',
-        },
+const ImportDialouge = ({
+  open,
+  handleClose,
+  onStudyNowComplete,
+  onCopyAndSaveComplete,
+}) => {
+  const [errorText, setErrorText] = useState('');
+  const [studleId, setStudleId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const hasError = errorText.length > 0;
+
+  const validateStudleId = () => {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const STUDLEID_LENGTH = 6;
+    const onlyAlphabetRegex = new RegExp(`^[${alphabet}]+$`);
+
+    try {
+      if (studleId.value.length !== STUDLEID_LENGTH) {
+        throw new Error('The ID must be 6 letters long');
+      } else if (!onlyAlphabetRegex.test(studleId.value)) {
+        throw new Error("ID's only contain upper/lowercase letters");
       }
-    );
-  } catch (e) {
-    // ignore
-  }
-  const json = await data.json();
 
-  if (json.type == 'error') {
-    if (json.data == 'User Not Found') {
-      setFetchSetsStatus('user_not_found');
-      return [];
+      return true;
+    } catch (e) {
+      setErrorText(e.message);
+      return false;
     }
-  }
+  };
 
-  setFetchSetsStatus('success');
-  return json.data;
+  const handleApiError = (data) => {
+    const errorTypes = {
+      'Studle Not Found': 'Set not found',
+      'No acess': 'Set is not public',
+    };
+
+    const errorMessage = errorTypes[data] ?? '';
+    setErrorText(errorMessage);
+    setLoading(false);
+  };
+
+  const turnOnLoadingBeforeTask = () => {
+    setErrorText('');
+    setLoading(true);
+  };
+
+  const studyNow = async () => {
+    if (!validateStudleId()) {
+      return;
+    }
+
+    turnOnLoadingBeforeTask();
+
+    const json = await api(`/sharedStudle/${studleId.value}`);
+
+    if (json.type === 'error') {
+      handleApiError();
+      return;
+    }
+
+    localStorage.setItem('studyingShared', true);
+    handleClose();
+    onStudyNowComplete?.(JSON.parse(json.data));
+  };
+
+  const copyAndSave = async () => {
+    if (!validateStudleId()) {
+      return;
+    }
+
+    turnOnLoadingBeforeTask();
+
+    const json = await api(`/sharedStudle/${studleId.value}`);
+    // as you parsed json.data to object, I parsed it as well
+    json.data = JSON.parse(json.data);
+
+    if (json.type === 'error') {
+      handleApiError();
+      return;
+    }
+
+    const dataStudleNames = await api(
+      `/studleNames/${encodeURIComponent(
+        localStorage.getItem('encryptedEmail')
+      )}`
+    );
+
+    let newStudleName = json.data.name;
+    const existingStudleNames = dataStudleNames.data.map(
+      (studle) => studle.name
+    );
+
+    if (existingStudleNames.includes(newStudleName)) {
+      let nextNumber = 1;
+      let newLabel = `${newStudleName} (${nextNumber})`;
+
+      while (existingStudleNames.includes(newLabel)) {
+        nextNumber++;
+        newLabel = `${newStudleName} (${nextNumber})`;
+      }
+
+      newStudleName = newLabel;
+    }
+
+    await api('/addStudleToUser', {
+      method: 'POST',
+      body: JSON.stringify({
+        encryptedEmail: localStorage.getItem('encryptedEmail'),
+        studleName: newStudleName,
+        data: JSON.stringify({ ...json.data, name: newStudleName }),
+      }),
+    });
+
+    onCopyAndSaveComplete?.();
+    handleClose();
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+      disableRestoreFocus
+    >
+      <DialogTitle id="alert-dialog-title">
+        {!loading ? 'Import a set!' : 'Importing...'}
+      </DialogTitle>
+      <DialogContent>
+        {!loading ? (
+          <TextField
+            autoFocus
+            id="studleIdInput"
+            margin="dense"
+            label="Studle Id"
+            variant="outlined"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            inputProps={{
+              maxLength: 6,
+              minLength: 6,
+              autoCorrect: 'off',
+              autoCapitalize: 'none',
+            }}
+            error={hasError}
+            helperText={errorText}
+            onChange={(event) => {
+              setStudleId(event.target.value);
+            }}
+          />
+        ) : (
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress />
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions
+        sx={{
+          justifyContent: 'space-between',
+          display: loading ? 'none' : 'block',
+        }}
+      >
+        <Button onClick={studyNow}>Study Now</Button>
+        <Button onClick={copyAndSave}>Copy & Save</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+async function getRecentSetNames(setFetchSetsStatus) {
+  try {
+    const json = await api(
+      `/studleNames/${encodeURIComponent(
+        localStorage.getItem('encryptedEmail')
+      )}`
+    );
+    if (json.type == 'error') {
+      if (json.data == 'User Not Found') {
+        setFetchSetsStatus('user_not_found');
+        return [];
+      }
+    }
+
+    setFetchSetsStatus('success');
+    return json.data;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 }
 
 export { HomePage };
